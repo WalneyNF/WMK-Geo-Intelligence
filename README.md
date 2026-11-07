@@ -90,3 +90,18 @@ Abra o navegador no endereço mostrado (geralmente http://localhost:4173).
 - [Padrao de documentacao](manuais/PADRAO-DOCUMENTACAO-WMK.md)
 - [Instalacao e testes](manuais/INSTALACAO-E-TESTES.md)
 Contribuicoes WMK: Walney Moreira Klein - walneyk@hotmail.com. Preservadas licencas originais.
+
+
+## Funcionamento independente e integrado — suíte WMK
+
+**Este projeto funciona de maneira independente:** não é obrigatório instalar os outros dois projetos WMK para usar suas funções principais.
+
+**Modo independente — WMK Geo Intelligence:** Abre o mapa e consome suas próprias fontes, conforme configurações e chaves de API, sem os demais.
+
+**Modo integrado (opcional):** Pode futuramente visualizar posições do Tracker por meio do Bridge. O fluxo completo ainda não foi validado.
+
+**Projetos relacionados:** [WMK GPS Tracker](https://github.com/WalneyNF/WMK-GPS-Tracker) · [WMK Geo Bridge](https://github.com/WalneyNF/WMK-Geo-Bridge) · [WMK Geo Intelligence](https://github.com/WalneyNF/WMK-Geo-Intelligence).
+
+**Situação dos testes:** os serviços responderam individualmente no laboratório, mas a integração ponta a ponta ainda não está aprovada. Consulte os manuais e os testes antes de disponibilizar dados privados.
+
+**Documentação:** [padrão WMK](manuais/PADRAO-DOCUMENTACAO-WMK.md). Créditos das contribuições WMK: **Walney Moreira Klein — walneyk@hotmail.com**. Preserve também as licenças e os avisos dos autores originais.
