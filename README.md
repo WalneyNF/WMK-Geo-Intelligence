@@ -124,3 +124,5 @@ Com o Vite iniciado, abra [Laboratorio WMK GPS](http://127.0.0.1:4173/geo-bridge
 
 ## Curso pratico: testar e consumir a API GPS
 [Manual completo de testes e desenvolvimento HTML/CSS/JavaScript](manuais/manual-testes-e-cliente-gps.html) · [Exemplo pronto com 3 arquivos](exemplos/cliente-gps/index.html). Inclui configuracao, JSON, fetch, polling, diagnostico, seguranca e exercicios.
+
+**Manual de fontes GPS:** [Como alimentar o GPS com Python, celulares, rastreadores, Node.js, PHP e outras fontes](manuais/fontes-de-dados-gps.html). Inclui contratos, exemplos, testes e limitações atuais.
