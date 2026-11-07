@@ -114,3 +114,6 @@ Contribuicoes WMK: Walney Moreira Klein - walneyk@hotmail.com. Preservadas licen
 **Situação dos testes:** os serviços responderam individualmente no laboratório, mas a integração ponta a ponta ainda não está aprovada. Consulte os manuais e os testes antes de disponibilizar dados privados.
 
 **Documentação:** [padrão WMK](manuais/PADRAO-DOCUMENTACAO-WMK.md). Créditos das contribuições WMK: **Walney Moreira Klein — walneyk@hotmail.com**. Preserve também as licenças e os avisos dos autores originais.
+
+## Laboratorio de integracao GPS (desenvolvimento)
+Com o Vite iniciado, abra [Laboratorio WMK GPS](http://127.0.0.1:4173/geo-bridge-lab.html) para testar health, configuracao e consulta de veiculos do Geo Bridge sem depender do mapa 3D. A porta do Vite pode variar; ajuste o endereco conforme a instancia. O Bridge precisa de credenciais do Traccar para retornar dispositivos. Este laboratorio e uma pagina de desenvolvimento, ainda nao validada em build de producao.
