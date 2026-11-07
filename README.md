@@ -1,4 +1,13 @@
-# 🌐 God's Eye View - Edição Brasileira (pt-BR) 🇧🇷
+# WMK Geo Intelligence
+
+![Logotipo WMK Geo Intelligence](public/wmk-logo.png)
+
+**WMK Geo Intelligence** — plataforma de inteligência geoespacial com interface 3D e fontes de dados configuráveis.
+
+**Créditos da edição WMK:** Walney Moreira Klein — walneyk@hotmail.com.
+
+Baseado no projeto original [God's Eye View](https://github.com/bilawalsidhu/gods-eye-view), com preservação das licenças e atribuições aplicáveis.
+
 
 Este é o meu fork do projeto original [God's Eye View](https://github.com/bilawalsidhu/gods-eye-view), um simulador de satélite espião que roda no navegador com dados reais e open-source.
 
@@ -20,8 +29,8 @@ Antes de começar, você vai precisar ter instalado no seu computador:
 
 ### 1. Clonar e Instalar
 Abra o seu terminal (CMD ou terminal do VS Code) e rode os comandos:
-    git clone https://github.com/WalneyNF/gods-eye-view.git
-    cd gods-eye-view
+    git clone https://github.com/WalneyNF/WMK-Geo-Intelligence.git
+    cd WMK-Geo-Intelligence
     npm install
 
 ### 2. Configurar o arquivo .env (A PARTE MAIS IMPORTANTE)
