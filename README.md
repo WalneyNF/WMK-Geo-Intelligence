@@ -119,3 +119,5 @@ Contribuicoes WMK: Walney Moreira Klein - walneyk@hotmail.com. Preservadas licen
 Com o Vite iniciado, abra [Laboratorio WMK GPS](http://127.0.0.1:4173/geo-bridge-lab.html) para testar health, configuracao e consulta de veiculos do Geo Bridge sem depender do mapa 3D. A porta do Vite pode variar; ajuste o endereco conforme a instancia. O Bridge precisa de credenciais do Traccar para retornar dispositivos. Este laboratorio e uma pagina de desenvolvimento, ainda nao validada em build de producao.
 
 **Manual didatico do laboratorio GPS:** [abrir manual HTML](manuais/laboratorio-gps.html) - diagnostico HTTP 503, autenticacao, testes e exercicios.
+
+**Manual completo do Laboratorio GPS (usuario e desenvolvedor):** [abrir manual HTML](manuais/manual-completo-laboratorio-gps.html). Explica a tela, arquitetura Python/HTTP/JSON/JavaScript, polling, testes, erros e exercicios.
