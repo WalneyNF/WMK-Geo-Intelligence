@@ -130,3 +130,5 @@ Com o Vite iniciado, abra [Laboratorio WMK GPS](http://127.0.0.1:4173/geo-bridge
 **Roteiro de testes de fontes GPS:** [testes HTTP, resultados observados e como reproduzir](manuais/roteiro-testes-fontes-gps.html).
 
 **Curso GPS multilinguagem:** [manual de testes e mapa Leaflet](manuais/curso-gps-multilinguagem.html) | [codigo-fonte Node, Python, PHP, PowerShell e mapa HTML/JS](exemplos/gps-multilinguagem/). Quatro envios HTTP 202 verificados; renderizacao visual do mapa ainda pendente.
+
+**Biblioteca GPS web/mobile:** [manual de TypeScript, React, Rust, React Native, Kotlin e Swift](manuais/integracao-gps-mobile-e-linguagens.html) | [fontes dos projetos](exemplos/gps-multilinguagem/README.md). Exemplos novos ainda nao validados em dispositivos.

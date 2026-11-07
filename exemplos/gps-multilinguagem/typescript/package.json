@@ -1,0 +1,1 @@
+{"name":"wmk-gps-typescript","private":true,"type":"module","scripts":{"build":"tsc","start":"node dist/enviar.js"},"devDependencies":{"typescript":"^5.9.0"}}
