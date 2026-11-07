@@ -86,3 +86,7 @@ Abra o navegador no endereço mostrado (geralmente http://localhost:4173).
 ## 🤝 Créditos
 - Projeto original criado por **[Bilawal Sidhu](https://github.com/bilawalsidhu)** e **[Sameh Khamis](https://github.com/samehkhamis)**.
 - Tradução e documentação deste fork feita por **[Walney Moreira Klein](https://github.com/WalneyNF)**.
+## Documentacao WMK em portugues
+- [Padrao de documentacao](manuais/PADRAO-DOCUMENTACAO-WMK.md)
+- [Instalacao e testes](manuais/INSTALACAO-E-TESTES.md)
+Contribuicoes WMK: Walney Moreira Klein - walneyk@hotmail.com. Preservadas licencas originais.
