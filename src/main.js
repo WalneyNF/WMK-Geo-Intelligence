@@ -12,7 +12,7 @@ const application = createStandaloneApplication({
 
 application.start().then(({scene}) => {
   const gps = mountGpsLayer(scene.viewer);
-  const destroyResearch = mountWmkResearch();
+  const destroyResearch = mountWmkResearch(scene.viewer);
   window.addEventListener('pagehide', destroyResearch, { once: true });
   window.addEventListener('pagehide', () => gps.destroy(), { once: true });
 }).catch((error) => {
