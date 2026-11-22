@@ -1,4 +1,74 @@
-# WMK Geo Intelligence
+# WMK Geo Intelligence — Earth Research AI
+
+![Logotipo WMK Geo Intelligence](public/wmk-logo.png)
+
+**Explore o planeta em 3D, pesquise informações na internet e converse com o Investigador IA usando Groq.**
+
+**Edição WMK:** Walney Moreira Klein — walneyk@hotmail.com.  
+**Base original:** [God's Eye View](https://github.com/bilawalsidhu/gods-eye-view), com créditos e licenças preservados.
+
+> **Versão experimental v0.3:** código disponível na branch `wmk/earth-research-v01`. Ainda não há instalador EXE, versão portátil homologada ou release final. O código da branch `main` pode não conter as funcionalidades mais recentes do Investigador IA.
+
+## 📦 Baixar a versão com Investigador IA
+
+**Opção A — ZIP (não precisa de Git):** [Baixar código-fonte da versão experimental](https://github.com/WalneyNF/WMK-Geo-Intelligence/archive/refs/heads/wmk/earth-research-v01.zip). Descompacte em uma pasta nova. O ZIP contém o código, **não um aplicativo executável**, e ainda exige Node.js e configuração.
+
+**Opção B — Git (facilita futuras atualizações):**
+
+```powershell
+git clone -b wmk/earth-research-v01 https://github.com/WalneyNF/WMK-Geo-Intelligence.git WMK-Geo-Intelligence
+cd WMK-Geo-Intelligence
+```
+
+**Instalação e primeiros testes:** [Manual do Investigador IA v0.3](manuais/wmk-investigador-v03.md) · [Guia de instalação para usuários e desenvolvedores](manuais/instalacao-investigador-windows.md).
+
+### Instalação rápida no Windows — sem Docker
+
+Requer **Node.js compatível** (conforme `package.json`: 24.14+ dentro da série 24 ou a série 26), npm e conexão à internet para dependências e Groq.
+
+```powershell
+Copy-Item .env.example .env
+npm install
+npm run dev
+```
+
+No `.env`, configure **`GROQ_API_KEY`** com sua chave privada e opcionalmente `WMK_GROQ_MODEL=openai/gpt-oss-20b`. Nunca publique esse arquivo ou sua chave. Abra o endereço local que o Vite mostrar no terminal.
+
+O mecanismo de busca tenta SearXNG local, quando configurado, e depois fontes RSS externas. **RSS não substitui uma busca web completa**: notícias, bloqueios ou indisponibilidade podem limitar resultados. A aplicação continua capaz de conversar pelo Groq sem fontes web, deixando essa limitação explícita.
+
+### Funcionalidades desta versão experimental
+
+- Globo Cesium e camadas geoespaciais existentes preservadas.
+- Painel flutuante WMK Investigador IA e respostas em português.
+- Pesquisa externa com links das fontes quando serviços responderem.
+- Local investigado, captura do centro do globo e botão **Ir para o local**.
+- Comandos simples de navegação, como `Me leve para Paris, França`, reutilizando a busca de lugares existente.
+- Diagnóstico de Groq (chave presente) e dos mecanismos web (consulta real).
+
+**Ainda não implementado:** conversa persistente, investigação autônoma profunda, identificação automática de câmeras/fotos pela IA, navegação livre gerada pelo modelo e instalador Windows final. A integração v0.3 não foi homologada por testes completos em Windows.
+
+### Atualizar instalações feitas com Git
+
+```powershell
+git status
+git switch wmk/earth-research-v01
+git pull --ff-only origin wmk/earth-research-v01
+npm install
+npm run dev
+```
+
+Proteja alterações locais antes de atualizar; preserve o `.env`. Quem baixou por ZIP deve baixar novamente uma versão atualizada e transferir suas configurações com cuidado.
+
+### Documentação e suporte
+
+- [Instalação Windows, download, erros e testes](manuais/instalacao-investigador-windows.md)
+- [Investigador v0.3: recursos, limites e exemplos](manuais/wmk-investigador-v03.md)
+- [Histórico da integração Groq/SearXNG](manuais/wmk-earth-research-ai-v01.md)
+- [Comparar e revisar as modificações antes de unir à main](https://github.com/WalneyNF/WMK-Geo-Intelligence/pull/1)
+
+---
+
+## Documentação do Geo Intelligence original e demais módulos
 
 ![Logotipo WMK Geo Intelligence](public/wmk-logo.png)
 
