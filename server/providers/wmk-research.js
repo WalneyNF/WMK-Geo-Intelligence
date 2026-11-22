@@ -1,5 +1,6 @@
 // WMK Investigador IA: proxy local para SearXNG + Groq, sem expor chaves no navegador.
 import { URL } from 'node:url';
+import { searchWeb } from './wmk-web-search.js';
 export function wmkResearchProxy() {
   return {
     name: 'wmk-research-local',
@@ -17,37 +18,19 @@ export function wmkResearchProxy() {
         const signal = AbortSignal.timeout(45000);
         try {
           if (req.method === 'GET' && endpoint.pathname === '/status') {
-            const searxng = process.env.WMK_SEARXNG_URL || 'http://127.0.0.1:8888';
-            let search = { ok: false, detail: 'Não testado' };
+            const searxng = process.env.WMK_SEARXNG_URL || '';
+            let search;
             try {
-              const target = new URL('/search', searxng);
-              if (!['127.0.0.1','localhost','::1'].includes(target.hostname)) throw new Error('Endereço não local');
-              target.search = new URLSearchParams({ q:'Paris', format:'json' }).toString();
-              const resp = await fetch(target, { signal: AbortSignal.timeout(7000) });
-              if (!resp.ok) throw new Error('HTTP ' + resp.status + ' (habilite JSON)');
-              const json = await resp.json();
-              if (!Array.isArray(json.results)) throw new Error('Resposta sem campo results');
-              search = { ok:true, detail: json.results.length + ' resultados' };
-            } catch (error) { search = { ok:false, detail:String(error.message).slice(0,150) }; }
-            return send(200, { groq: !!process.env.GROQ_API_KEY, searxng, search });
+              const response = await searchWeb('Paris França', { searxngUrl:searxng,timeout:5500 });
+              search = { ok:true, provider:response.provider, detail:response.results.length+' fontes encontradas' };
+            } catch (error) { search={ok:false,provider:null,detail:error.message}; }
+            return send(200, { groq: !!process.env.GROQ_API_KEY, searxng:searxng||'desativado', search });
           }
           if (req.method === 'GET' && endpoint.pathname === '/search') {
             const q = (endpoint.searchParams.get('q') || '').trim().slice(0, 500);
             if (!q) return send(400, { error: 'Informe uma pergunta.' });
-            const target = new URL(process.env.WMK_SEARXNG_URL || 'http://127.0.0.1:8888');
-            if (!['127.0.0.1', 'localhost', '::1'].includes(target.hostname) || !['http:', 'https:'].includes(target.protocol))
-              return send(400, { error: 'Configure um SearXNG local no arquivo .env.' });
-            target.pathname = '/search';
-            target.search = new URLSearchParams({ q, format: 'json', language: 'pt-BR' }).toString();
-            const response = await fetch(target, { signal });
-            if (!response.ok) throw new Error('SearXNG respondeu HTTP ' + response.status + '. Confira o formato JSON.');
-            const data = await response.json();
-            return send(200, { results: (data.results || []).slice(0, 10).map(r => ({
-              title: String(r.title || '').slice(0, 250),
-              url: String(r.url || '').slice(0, 900),
-              content: String(r.content || '').slice(0, 900),
-              engine: String(r.engine || '').slice(0, 100),
-            })) });
+            const response = await searchWeb(q, { searxngUrl:process.env.WMK_SEARXNG_URL || '',timeout:8500 });
+            return send(200,response);
           }
           if (req.method === 'POST' && endpoint.pathname === '/ask') {
             if (!process.env.GROQ_API_KEY) return send(503, { error: 'GROQ_API_KEY não configurada no servidor.' });
