@@ -6,12 +6,12 @@ export function mountWmkResearch(viewer) {
   root.id = 'wmk-research-panel';
   root.setAttribute('aria-label', 'WMK Investigador IA');
   root.innerHTML = `
-    <div class="wmkr-title"><strong>🔎 WMK Investigador IA <small>v0.2 • Groq</small></strong><button type="button" data-toggle aria-label="Minimizar painel">−</button></div>
-    <div class="wmkr-body"><div class="wmkr-location"><label for="wmkr-location">Local investigado</label><input id="wmkr-location" placeholder="Ex.: Paris, França" /><button type="button" data-center>Usar centro do globo</button></div>
+    <div class="wmkr-title"><strong>🔎 WMK Investigador IA <small>v0.3 • Groq + Globo</small></strong><button type="button" data-toggle aria-label="Minimizar painel">−</button></div>
+    <div class="wmkr-body"><div class="wmkr-location"><label for="wmkr-location">Local investigado</label><input id="wmkr-location" placeholder="Ex.: Paris, França" /><button type="button" data-center>Usar centro do globo</button><button type="button" data-fly>Ir para o local</button></div>
       <form data-form>
         <label for="wmkr-question">Pesquise e investigue qualquer lugar do mundo</label>
         <textarea id="wmkr-question" rows="3" maxlength="1200" placeholder="Ex.: Investigue a história do Coliseu em Roma e cite fontes."></textarea>
-        <label class="wmkr-option"><input type="checkbox" data-web checked /> Pesquisar na internet (SearXNG)</label><div class="wmkr-actions"><button type="button" data-test>Diagnóstico real</button><button data-submit type="submit">Investigar</button></div>
+        <label class="wmkr-option"><input type="checkbox" data-web checked /> Pesquisar na internet (automático)</label><div class="wmkr-actions"><button type="button" data-test>Diagnóstico real</button><button data-submit type="submit">Investigar</button></div>
       </form>
       <p data-status role="status">Motor web: SearXNG • Investigador: Groq</p>
       <div data-answer class="wmkr-answer" aria-live="polite"></div>
@@ -56,6 +56,21 @@ export function mountWmkResearch(viewer) {
     root.style.right = 'auto';
   });
   for (const type of ['pointerup','pointercancel']) title.addEventListener(type, () => { start = null; });
+  const navigateTo = (place) => {
+    const input = document.querySelector('#location-search');
+    if (!input) throw new Error('Busca de lugares do globo não disponível.');
+    const target = String(place || '').trim();
+    if (!target || target.length > 200) throw new Error('Informe uma cidade ou local válido.');
+    input.value = target;
+    input.dispatchEvent(new Event('input', { bubbles:true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', code:'Enter', bubbles:true, cancelable:true }));
+    one('#wmkr-location').value = target;
+    status.textContent = 'Solicitada navegação pelo mecanismo original do globo: ' + target;
+  };
+  one('[data-fly]').addEventListener('click', () => {
+    try { navigateTo(one('#wmkr-location').value); }
+    catch (error) { status.textContent = error.message; }
+  });
   one('[data-center]').addEventListener('click', () => {
     try {
       const canvas = viewer?.canvas;
@@ -75,7 +90,7 @@ export function mountWmkResearch(viewer) {
       const res = await fetch('/wmk-research/status');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      status.textContent = 'Groq: ' + (data.groq ? 'chave presente (clique Investigar para testar)' : 'chave ausente') + ' | Pesquisa web: ' + (data.search?.ok ? 'OK, ' : 'FALHOU, ') + (data.search?.detail || 'sem diagnóstico');
+      status.textContent = 'Groq: ' + (data.groq ? 'chave presente' : 'chave ausente') + ' | Internet: ' + (data.search?.ok ? 'OK via ' + data.search.provider : 'indisponível') + ' • ' + (data.search?.detail || '');
     } catch (error) { status.textContent = 'Falha: ' + error.message; }
   });
   one('[data-form]').addEventListener('submit', async (event) => {
@@ -83,6 +98,14 @@ export function mountWmkResearch(viewer) {
     const question = one('textarea').value.trim();
     const location = one('#wmkr-location').value.trim().slice(0, 250);
     const contextualQuestion = location ? 'Local investigado: ' + location + '. ' + question : question;
+    // Comando de navegação reconhecido explicitamente. Usa a busca de lugares original,
+    // sem deixar o modelo inventar coordenadas nem executar JavaScript.
+    const navigationMatch = question.match(/^(?:me leve|leve-me|vamos|vá|ir|navegue|voe|mostre no mapa)\\s+(?:para|até|a|ao|à|em)?\\s*(.+?)[.!]?$/i);
+    if (navigationMatch) {
+      const destination = navigationMatch[1].replace(/[.!]+$/, '').trim();
+      try { navigateTo(destination); } catch (error) { status.textContent = error.message; }
+      return;
+    }
     if (!question) return;
     submit.disabled = true;
     status.textContent = 'Buscando fontes...';
@@ -92,12 +115,14 @@ export function mountWmkResearch(viewer) {
       const useWeb = one('[data-web]').checked;
       let searchResults = [];
       let webWarning = '';
+      let webProvider = '';
       if (useWeb) {
         try {
           const searchResponse = await fetch('/wmk-research/search?q=' + encodeURIComponent(contextualQuestion));
           const search = await searchResponse.json();
           if (!searchResponse.ok) throw new Error(search.error || 'Falha na pesquisa.');
           searchResults = search.results || [];
+          webProvider = search.provider || '';
           if (searchResults.length === 0) webWarning = 'A pesquisa não encontrou fontes verificáveis.';
         } catch (webError) {
           webWarning = 'Pesquisa web indisponível: ' + webError.message;
@@ -126,7 +151,7 @@ export function mountWmkResearch(viewer) {
           sourcesElement.append(link);
         } catch { /* ignore malformed result URL */ }
       }
-      status.textContent = 'Resposta recebida • ' + (result.model || 'Groq') + ' • fontes: ' + result.sources.length;
+      status.textContent = 'Resposta recebida • ' + (result.model || 'Groq') + ' • busca: ' + (webProvider || 'sem fontes') + ' • fontes: ' + result.sources.length;
     } catch (error) {
       if (alive) status.textContent = 'Erro: ' + error.message;
     } finally { if (alive) submit.disabled = false; }
