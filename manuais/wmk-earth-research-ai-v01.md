@@ -67,3 +67,49 @@ O campo do local não executa sozinho um voo de câmera; a navegação segue sob
 - Identificação de local por geocodificação reversa e seleção de um marcador.
 - Filtros para câmeras e imagens públicas da região, com data e procedência.
 - Painéis redimensionáveis, layouts salvos em JSON e dossiês de investigação.
+
+## Atualização v0.2 — diagnóstico e modo Groq independente
+
+A interface foi ajustada para **WMK Geo Intelligence**, usando o logotipo WMK já presente em `public/wmk-logo.png`. Esses ajustes cobrem o cabeçalho visível e o título HTML, mas não constituem ainda a renomeação de todas as referências internas herdadas do projeto original.
+
+### Atualizar a pasta clonada do fork
+
+```powershell
+cd D:\Ferramentas\WMK-Geo-Intelligence-NOVO
+git switch wmk/earth-research-v01
+git pull --ff-only origin wmk/earth-research-v01
+npm run dev
+```
+
+Se houver mudanças locais, confira `git status` antes de tentar trocar de branch ou atualizar. Não apague sua pasta anterior nem o `.env`.
+
+### Primeiro teste — apenas Groq, sem SearXNG
+1. Confirme `GROQ_API_KEY` no `.env` e reinicie o Vite.
+2. Na tela do globo, clique no painel WMK Investigador IA.
+3. **Desmarque** a caixa `Pesquisar na internet (SearXNG)`.
+4. Digite `Explique a história de Paris em cinco frases` e clique **Investigar**.
+5. O texto deve aparecer no painel. Se falhar, o erro Groq será mostrado.
+6. Sem pesquisa web, a resposta não representa informação atual verificada.
+
+### Segundo teste — busca web
+1. Inicie sua instalação SearXNG separadamente, sem Docker.
+2. Confirme no navegador `http://127.0.0.1:8888/search?q=Paris&format=json` que retorna JSON; se ocorrer HTTP 403, habilite `json` em `search.formats`.
+3. Clique **Diagnóstico real** no painel: agora o servidor faz uma consulta simples ao SearXNG e indica sucesso/falha.
+4. Marque `Pesquisar na internet (SearXNG)` e repita a pergunta.
+5. A resposta deve mostrar fontes com links quando o mecanismo devolver resultados.
+
+### Teste técnico isolado no PowerShell
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:4173/wmk-research/status | ConvertTo-Json -Depth 5
+Invoke-RestMethod "http://127.0.0.1:8888/search?q=Paris&format=json" | Select-Object -ExpandProperty results | Select-Object -First 3
+```
+
+A porta do Vite pode mudar se já estiver ocupada. A rota `status` não testa a validade da chave Groq; a validação efetiva só ocorre ao clicar `Investigar`. Se a pesquisa web falhar, o painel ainda tenta responder com Groq, avisando claramente que faltam fontes atuais.
+
+### Ainda pendente
+- Navegação comandada pela IA e associação automática das câmeras.
+- Conversa persistente com contexto entre mensagens.
+- Identificação automática do município a partir das coordenadas.
+- Tradução completa de menus e renomeação de referências internas.
+- Build/teste integrado no Windows, incluindo verificação visual do globo.
