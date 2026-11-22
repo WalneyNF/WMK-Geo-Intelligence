@@ -6,12 +6,12 @@ export function mountWmkResearch(viewer) {
   root.id = 'wmk-research-panel';
   root.setAttribute('aria-label', 'WMK Investigador IA');
   root.innerHTML = `
-    <div class="wmkr-title"><strong>🔎 WMK Investigador IA <small>v0.1 • Groq</small></strong><button type="button" data-toggle aria-label="Minimizar painel">−</button></div>
+    <div class="wmkr-title"><strong>🔎 WMK Investigador IA <small>v0.2 • Groq</small></strong><button type="button" data-toggle aria-label="Minimizar painel">−</button></div>
     <div class="wmkr-body"><div class="wmkr-location"><label for="wmkr-location">Local investigado</label><input id="wmkr-location" placeholder="Ex.: Paris, França" /><button type="button" data-center>Usar centro do globo</button></div>
       <form data-form>
         <label for="wmkr-question">Pesquise e investigue qualquer lugar do mundo</label>
         <textarea id="wmkr-question" rows="3" maxlength="1200" placeholder="Ex.: Investigue a história do Coliseu em Roma e cite fontes."></textarea>
-        <div class="wmkr-actions"><button type="button" data-test>Verificar serviços</button><button data-submit type="submit">Investigar</button></div>
+        <label class="wmkr-option"><input type="checkbox" data-web checked /> Pesquisar na internet (SearXNG)</label><div class="wmkr-actions"><button type="button" data-test>Diagnóstico real</button><button data-submit type="submit">Investigar</button></div>
       </form>
       <p data-status role="status">Motor web: SearXNG • Investigador: Groq</p>
       <div data-answer class="wmkr-answer" aria-live="polite"></div>
@@ -25,7 +25,7 @@ export function mountWmkResearch(viewer) {
   #wmk-research-panel *{box-sizing:border-box}#wmk-research-panel .wmkr-title{cursor:move;user-select:none;background:#183441;padding:10px 12px;display:flex;justify-content:space-between;align-items:center}#wmk-research-panel small{font-size:10px;color:#a3d0dd}
   #wmk-research-panel button{background:#116d88;border:0;border-radius:5px;color:white;padding:8px 11px;cursor:pointer}#wmk-research-panel button:disabled{opacity:.5;cursor:wait}
   #wmk-research-panel .wmkr-title button{background:#31515e;padding:4px 10px}#wmk-research-panel .wmkr-body{padding:12px;overflow-y:auto;max-height:calc(75vh - 42px)}
-  #wmk-research-panel .wmkr-location{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}#wmk-research-panel .wmkr-location label{width:100%}#wmk-research-panel .wmkr-location input{flex:1;min-width:130px;background:#10242f;color:white;border:1px solid #487a8b;border-radius:5px;padding:8px}#wmk-research-panel textarea{resize:vertical;min-height:66px;width:100%;background:#10242f;color:white;border:1px solid #487a8b;border-radius:6px;padding:8px;margin:8px 0}
+  #wmk-research-panel .wmkr-location{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}#wmk-research-panel .wmkr-location label{width:100%}#wmk-research-panel .wmkr-location input{flex:1;min-width:130px;background:#10242f;color:white;border:1px solid #487a8b;border-radius:5px;padding:8px}#wmk-research-panel .wmkr-option{display:flex;align-items:center;gap:7px;margin:5px 0 12px}#wmk-research-panel .wmkr-option input{accent-color:#20bce0}#wmk-research-panel textarea{resize:vertical;min-height:66px;width:100%;background:#10242f;color:white;border:1px solid #487a8b;border-radius:6px;padding:8px;margin:8px 0}
   #wmk-research-panel .wmkr-actions{display:flex;gap:8px;justify-content:flex-end}#wmk-research-panel [data-status],#wmk-research-panel .wmkr-credit{font-size:11px;color:#a1bdc9}
   #wmk-research-panel .wmkr-answer{white-space:pre-wrap;line-height:1.5;overflow-wrap:anywhere}#wmk-research-panel .wmkr-sources a{display:block;color:#83e4fc;padding:5px 0;overflow-wrap:anywhere}
   #wmk-research-panel.wmkr-min .wmkr-body{display:none}
@@ -75,7 +75,7 @@ export function mountWmkResearch(viewer) {
       const res = await fetch('/wmk-research/status');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      status.textContent = 'Groq: ' + (data.groq ? 'chave configurada' : 'sem chave') + ' • SearXNG: ' + data.searxng;
+      status.textContent = 'Groq: ' + (data.groq ? 'chave presente (clique Investigar para testar)' : 'chave ausente') + ' | Pesquisa web: ' + (data.search?.ok ? 'OK, ' : 'FALHOU, ') + (data.search?.detail || 'sem diagnóstico');
     } catch (error) { status.textContent = 'Falha: ' + error.message; }
   });
   one('[data-form]').addEventListener('submit', async (event) => {
@@ -89,18 +89,31 @@ export function mountWmkResearch(viewer) {
     answer.textContent = '';
     sourcesElement.replaceChildren();
     try {
-      const searchResponse = await fetch('/wmk-research/search?q=' + encodeURIComponent(contextualQuestion));
-      const search = await searchResponse.json();
-      if (!searchResponse.ok) throw new Error(search.error || 'Falha na pesquisa.');
-      status.textContent = 'Consultando Groq com ' + search.results.length + ' fontes...';
+      const useWeb = one('[data-web]').checked;
+      let searchResults = [];
+      let webWarning = '';
+      if (useWeb) {
+        try {
+          const searchResponse = await fetch('/wmk-research/search?q=' + encodeURIComponent(contextualQuestion));
+          const search = await searchResponse.json();
+          if (!searchResponse.ok) throw new Error(search.error || 'Falha na pesquisa.');
+          searchResults = search.results || [];
+          if (searchResults.length === 0) webWarning = 'A pesquisa não encontrou fontes verificáveis.';
+        } catch (webError) {
+          webWarning = 'Pesquisa web indisponível: ' + webError.message;
+        }
+      } else {
+        webWarning = 'Pesquisa na internet desativada: resposta sem fontes atuais.';
+      }
+      status.textContent = 'Consultando Groq' + (searchResults.length ? ' com ' + searchResults.length + ' fontes...' : ' sem fontes da web...');
       const response = await fetch('/wmk-research/ask', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, location, sources:search.results }),
+        body: JSON.stringify({ question, location, sources:searchResults }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Falha no Groq.');
       if (!alive) return;
-      answer.textContent = result.answer || 'O modelo não retornou texto.';
+      answer.textContent = (webWarning ? '⚠ ' + webWarning + '\n\n' : '') + (result.answer || 'O modelo não retornou texto.');
       for (const source of result.sources) {
         try {
           const target = new URL(source.url);
@@ -113,7 +126,7 @@ export function mountWmkResearch(viewer) {
           sourcesElement.append(link);
         } catch { /* ignore malformed result URL */ }
       }
-      status.textContent = 'Pesquisa concluída • modelo: ' + (result.model || 'Groq');
+      status.textContent = 'Resposta recebida • ' + (result.model || 'Groq') + ' • fontes: ' + result.sources.length;
     } catch (error) {
       if (alive) status.textContent = 'Erro: ' + error.message;
     } finally { if (alive) submit.disabled = false; }
