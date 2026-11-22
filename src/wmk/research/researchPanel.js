@@ -1,12 +1,13 @@
+import * as Cesium from 'cesium';
 // WMK Pesquisa IA: painel flutuante aditivo; preserva camadas e controles Cesium existentes.
-export function mountWmkResearch() {
+export function mountWmkResearch(viewer) {
   if (document.getElementById('wmk-research-panel')) return () => {};
   const root = document.createElement('section');
   root.id = 'wmk-research-panel';
   root.setAttribute('aria-label', 'WMK Investigador IA');
   root.innerHTML = `
     <div class="wmkr-title"><strong>🔎 WMK Investigador IA <small>v0.1 • Groq</small></strong><button type="button" data-toggle aria-label="Minimizar painel">−</button></div>
-    <div class="wmkr-body">
+    <div class="wmkr-body"><div class="wmkr-location"><label for="wmkr-location">Local investigado</label><input id="wmkr-location" placeholder="Ex.: Paris, França" /><button type="button" data-center>Usar centro do globo</button></div>
       <form data-form>
         <label for="wmkr-question">Pesquise e investigue qualquer lugar do mundo</label>
         <textarea id="wmkr-question" rows="3" maxlength="1200" placeholder="Ex.: Investigue a história do Coliseu em Roma e cite fontes."></textarea>
@@ -24,7 +25,7 @@ export function mountWmkResearch() {
   #wmk-research-panel *{box-sizing:border-box}#wmk-research-panel .wmkr-title{cursor:move;user-select:none;background:#183441;padding:10px 12px;display:flex;justify-content:space-between;align-items:center}#wmk-research-panel small{font-size:10px;color:#a3d0dd}
   #wmk-research-panel button{background:#116d88;border:0;border-radius:5px;color:white;padding:8px 11px;cursor:pointer}#wmk-research-panel button:disabled{opacity:.5;cursor:wait}
   #wmk-research-panel .wmkr-title button{background:#31515e;padding:4px 10px}#wmk-research-panel .wmkr-body{padding:12px;overflow-y:auto;max-height:calc(75vh - 42px)}
-  #wmk-research-panel textarea{resize:vertical;min-height:66px;width:100%;background:#10242f;color:white;border:1px solid #487a8b;border-radius:6px;padding:8px;margin:8px 0}
+  #wmk-research-panel .wmkr-location{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}#wmk-research-panel .wmkr-location label{width:100%}#wmk-research-panel .wmkr-location input{flex:1;min-width:130px;background:#10242f;color:white;border:1px solid #487a8b;border-radius:5px;padding:8px}#wmk-research-panel textarea{resize:vertical;min-height:66px;width:100%;background:#10242f;color:white;border:1px solid #487a8b;border-radius:6px;padding:8px;margin:8px 0}
   #wmk-research-panel .wmkr-actions{display:flex;gap:8px;justify-content:flex-end}#wmk-research-panel [data-status],#wmk-research-panel .wmkr-credit{font-size:11px;color:#a1bdc9}
   #wmk-research-panel .wmkr-answer{white-space:pre-wrap;line-height:1.5;overflow-wrap:anywhere}#wmk-research-panel .wmkr-sources a{display:block;color:#83e4fc;padding:5px 0;overflow-wrap:anywhere}
   #wmk-research-panel.wmkr-min .wmkr-body{display:none}
@@ -55,6 +56,19 @@ export function mountWmkResearch() {
     root.style.right = 'auto';
   });
   for (const type of ['pointerup','pointercancel']) title.addEventListener(type, () => { start = null; });
+  one('[data-center]').addEventListener('click', () => {
+    try {
+      const canvas = viewer?.canvas;
+      if (!canvas) throw new Error('Globo não está disponível.');
+      const position = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(canvas.clientWidth / 2, canvas.clientHeight / 2), viewer.scene.globe.ellipsoid);
+      if (!position) throw new Error('Aponte o centro da tela para a superfície terrestre.');
+      const point = Cesium.Cartographic.fromCartesian(position);
+      const latitude = Cesium.Math.toDegrees(point.latitude).toFixed(5);
+      const longitude = Cesium.Math.toDegrees(point.longitude).toFixed(5);
+      one('#wmkr-location').value = latitude + ', ' + longitude;
+      status.textContent = 'Coordenadas capturadas do centro do globo. Você pode indicar o nome da cidade para uma pesquisa mais específica.';
+    } catch (error) { status.textContent = error.message; }
+  });
   one('[data-test]').addEventListener('click', async () => {
     status.textContent = 'Verificando serviços...';
     try {
@@ -67,19 +81,21 @@ export function mountWmkResearch() {
   one('[data-form]').addEventListener('submit', async (event) => {
     event.preventDefault();
     const question = one('textarea').value.trim();
+    const location = one('#wmkr-location').value.trim().slice(0, 250);
+    const contextualQuestion = location ? 'Local investigado: ' + location + '. ' + question : question;
     if (!question) return;
     submit.disabled = true;
     status.textContent = 'Buscando fontes...';
     answer.textContent = '';
     sourcesElement.replaceChildren();
     try {
-      const searchResponse = await fetch('/wmk-research/search?q=' + encodeURIComponent(question));
+      const searchResponse = await fetch('/wmk-research/search?q=' + encodeURIComponent(contextualQuestion));
       const search = await searchResponse.json();
       if (!searchResponse.ok) throw new Error(search.error || 'Falha na pesquisa.');
       status.textContent = 'Consultando Groq com ' + search.results.length + ' fontes...';
       const response = await fetch('/wmk-research/ask', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, sources:search.results }),
+        body: JSON.stringify({ question, location, sources:search.results }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Falha no Groq.');
