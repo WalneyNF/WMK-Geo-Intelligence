@@ -1,0 +1,160 @@
+import * as Cesium from 'cesium';
+// WMK Pesquisa IA: painel flutuante aditivo; preserva camadas e controles Cesium existentes.
+export function mountWmkResearch(viewer) {
+  if (document.getElementById('wmk-research-panel')) return () => {};
+  const root = document.createElement('section');
+  root.id = 'wmk-research-panel';
+  root.setAttribute('aria-label', 'WMK Investigador IA');
+  root.innerHTML = `
+    <div class="wmkr-title"><strong>🔎 WMK Investigador IA <small>v0.3 • Groq + Globo</small></strong><button type="button" data-toggle aria-label="Minimizar painel">−</button></div>
+    <div class="wmkr-body"><div class="wmkr-location"><label for="wmkr-location">Local investigado</label><input id="wmkr-location" placeholder="Ex.: Paris, França" /><button type="button" data-center>Usar centro do globo</button><button type="button" data-fly>Ir para o local</button></div>
+      <form data-form>
+        <label for="wmkr-question">Pesquise e investigue qualquer lugar do mundo</label>
+        <textarea id="wmkr-question" rows="3" maxlength="1200" placeholder="Ex.: Investigue a história do Coliseu em Roma e cite fontes."></textarea>
+        <label class="wmkr-option"><input type="checkbox" data-web checked /> Pesquisar na internet (automático)</label><div class="wmkr-actions"><button type="button" data-test>Diagnóstico real</button><button data-submit type="submit">Investigar</button></div>
+      </form>
+      <p data-status role="status">Motor web: SearXNG • Investigador: Groq</p>
+      <div data-answer class="wmkr-answer" aria-live="polite"></div>
+      <div data-sources class="wmkr-sources"></div>
+      <p class="wmkr-credit">Walney Moreira Klein — walneyk@hotmail.com</p>
+    </div>`;
+  const style = document.createElement('style');
+  style.id = 'wmk-research-style';
+  style.textContent = `
+  #wmk-research-panel{position:fixed;right:18px;top:80px;width:390px;max-width:calc(100vw - 24px);max-height:75vh;z-index:30000;color:#e7f6fc;background:#0c1821f2;border:1px solid #39758e;border-radius:10px;box-shadow:0 12px 32px #0009;font:13px system-ui,sans-serif;overflow:hidden}
+  #wmk-research-panel *{box-sizing:border-box}#wmk-research-panel .wmkr-title{cursor:move;user-select:none;background:#183441;padding:10px 12px;display:flex;justify-content:space-between;align-items:center}#wmk-research-panel small{font-size:10px;color:#a3d0dd}
+  #wmk-research-panel button{background:#116d88;border:0;border-radius:5px;color:white;padding:8px 11px;cursor:pointer}#wmk-research-panel button:disabled{opacity:.5;cursor:wait}
+  #wmk-research-panel .wmkr-title button{background:#31515e;padding:4px 10px}#wmk-research-panel .wmkr-body{padding:12px;overflow-y:auto;max-height:calc(75vh - 42px)}
+  #wmk-research-panel .wmkr-location{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}#wmk-research-panel .wmkr-location label{width:100%}#wmk-research-panel .wmkr-location input{flex:1;min-width:130px;background:#10242f;color:white;border:1px solid #487a8b;border-radius:5px;padding:8px}#wmk-research-panel .wmkr-option{display:flex;align-items:center;gap:7px;margin:5px 0 12px}#wmk-research-panel .wmkr-option input{accent-color:#20bce0}#wmk-research-panel textarea{resize:vertical;min-height:66px;width:100%;background:#10242f;color:white;border:1px solid #487a8b;border-radius:6px;padding:8px;margin:8px 0}
+  #wmk-research-panel .wmkr-actions{display:flex;gap:8px;justify-content:flex-end}#wmk-research-panel [data-status],#wmk-research-panel .wmkr-credit{font-size:11px;color:#a1bdc9}
+  #wmk-research-panel .wmkr-answer{white-space:pre-wrap;line-height:1.5;overflow-wrap:anywhere}#wmk-research-panel .wmkr-sources a{display:block;color:#83e4fc;padding:5px 0;overflow-wrap:anywhere}
+  #wmk-research-panel.wmkr-min .wmkr-body{display:none}
+  @media(max-width:600px){#wmk-research-panel{right:12px;top:54px;width:calc(100vw - 24px)}}
+  `;
+  document.head.append(style);
+  document.body.append(root);
+  const one = (selector) => root.querySelector(selector);
+  const status = one('[data-status]');
+  const answer = one('[data-answer]');
+  const sourcesElement = one('[data-sources]');
+  const submit = one('[data-submit]');
+  let alive = true;
+  one('[data-toggle]').addEventListener('click', () => root.classList.toggle('wmkr-min'));
+  const title = one('.wmkr-title');
+  let start;
+  title.addEventListener('pointerdown', (event) => {
+    if (event.target.closest('button')) return;
+    start = { x:event.clientX, y:event.clientY, left:root.getBoundingClientRect().left, top:root.getBoundingClientRect().top };
+    title.setPointerCapture(event.pointerId);
+  });
+  title.addEventListener('pointermove', (event) => {
+    if (!start) return;
+    const maxX = Math.max(0, window.innerWidth - root.offsetWidth);
+    const maxY = Math.max(0, window.innerHeight - 38);
+    root.style.left = Math.min(maxX, Math.max(0, start.left + event.clientX - start.x)) + 'px';
+    root.style.top = Math.min(maxY, Math.max(0, start.top + event.clientY - start.y)) + 'px';
+    root.style.right = 'auto';
+  });
+  for (const type of ['pointerup','pointercancel']) title.addEventListener(type, () => { start = null; });
+  const navigateTo = (place) => {
+    const input = document.querySelector('#location-search');
+    if (!input) throw new Error('Busca de lugares do globo não disponível.');
+    const target = String(place || '').trim();
+    if (!target || target.length > 200) throw new Error('Informe uma cidade ou local válido.');
+    input.value = target;
+    input.dispatchEvent(new Event('input', { bubbles:true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', code:'Enter', bubbles:true, cancelable:true }));
+    one('#wmkr-location').value = target;
+    status.textContent = 'Solicitada navegação pelo mecanismo original do globo: ' + target;
+  };
+  one('[data-fly]').addEventListener('click', () => {
+    try { navigateTo(one('#wmkr-location').value); }
+    catch (error) { status.textContent = error.message; }
+  });
+  one('[data-center]').addEventListener('click', () => {
+    try {
+      const canvas = viewer?.canvas;
+      if (!canvas) throw new Error('Globo não está disponível.');
+      const position = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(canvas.clientWidth / 2, canvas.clientHeight / 2), viewer.scene.globe.ellipsoid);
+      if (!position) throw new Error('Aponte o centro da tela para a superfície terrestre.');
+      const point = Cesium.Cartographic.fromCartesian(position);
+      const latitude = Cesium.Math.toDegrees(point.latitude).toFixed(5);
+      const longitude = Cesium.Math.toDegrees(point.longitude).toFixed(5);
+      one('#wmkr-location').value = latitude + ', ' + longitude;
+      status.textContent = 'Coordenadas capturadas do centro do globo. Você pode indicar o nome da cidade para uma pesquisa mais específica.';
+    } catch (error) { status.textContent = error.message; }
+  });
+  one('[data-test]').addEventListener('click', async () => {
+    status.textContent = 'Verificando serviços...';
+    try {
+      const res = await fetch('/wmk-research/status');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      status.textContent = 'Groq: ' + (data.groq ? 'chave presente' : 'chave ausente') + ' | Internet: ' + (data.search?.ok ? 'OK via ' + data.search.provider : 'indisponível') + ' • ' + (data.search?.detail || '');
+    } catch (error) { status.textContent = 'Falha: ' + error.message; }
+  });
+  one('[data-form]').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const question = one('textarea').value.trim();
+    const location = one('#wmkr-location').value.trim().slice(0, 250);
+    const contextualQuestion = location ? 'Local investigado: ' + location + '. ' + question : question;
+    // Comando de navegação reconhecido explicitamente. Usa a busca de lugares original,
+    // sem deixar o modelo inventar coordenadas nem executar JavaScript.
+    const navigationMatch = question.match(/^(?:me leve|leve-me|vamos|vá|ir|navegue|voe|mostre no mapa)\\s+(?:para|até|a|ao|à|em)?\\s*(.+?)[.!]?$/i);
+    if (navigationMatch) {
+      const destination = navigationMatch[1].replace(/[.!]+$/, '').trim();
+      try { navigateTo(destination); } catch (error) { status.textContent = error.message; }
+      return;
+    }
+    if (!question) return;
+    submit.disabled = true;
+    status.textContent = 'Buscando fontes...';
+    answer.textContent = '';
+    sourcesElement.replaceChildren();
+    try {
+      const useWeb = one('[data-web]').checked;
+      let searchResults = [];
+      let webWarning = '';
+      let webProvider = '';
+      if (useWeb) {
+        try {
+          const searchResponse = await fetch('/wmk-research/search?q=' + encodeURIComponent(contextualQuestion));
+          const search = await searchResponse.json();
+          if (!searchResponse.ok) throw new Error(search.error || 'Falha na pesquisa.');
+          searchResults = search.results || [];
+          webProvider = search.provider || '';
+          if (searchResults.length === 0) webWarning = 'A pesquisa não encontrou fontes verificáveis.';
+        } catch (webError) {
+          webWarning = 'Pesquisa web indisponível: ' + webError.message;
+        }
+      } else {
+        webWarning = 'Pesquisa na internet desativada: resposta sem fontes atuais.';
+      }
+      status.textContent = 'Consultando Groq' + (searchResults.length ? ' com ' + searchResults.length + ' fontes...' : ' sem fontes da web...');
+      const response = await fetch('/wmk-research/ask', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, location, sources:searchResults }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Falha no Groq.');
+      if (!alive) return;
+      answer.textContent = (webWarning ? '⚠ ' + webWarning + '\n\n' : '') + (result.answer || 'O modelo não retornou texto.');
+      for (const source of result.sources) {
+        try {
+          const target = new URL(source.url);
+          if (!['https:','http:'].includes(target.protocol)) continue;
+          const link = document.createElement('a');
+          link.href = target.href;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.textContent = '[' + source.id + '] ' + (source.title || target.hostname);
+          sourcesElement.append(link);
+        } catch { /* ignore malformed result URL */ }
+      }
+      status.textContent = 'Resposta recebida • ' + (result.model || 'Groq') + ' • busca: ' + (webProvider || 'sem fontes') + ' • fontes: ' + result.sources.length;
+    } catch (error) {
+      if (alive) status.textContent = 'Erro: ' + error.message;
+    } finally { if (alive) submit.disabled = false; }
+  });
+  return () => { alive = false; root.remove(); style.remove(); };
+}

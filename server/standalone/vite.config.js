@@ -4,6 +4,7 @@ import { resolveAllowedHosts } from '../../build/allowedHosts.js';
 import { createBrowserViteConfig } from '../../build/vite.js';
 import { localProviderPlugins } from '../providers/local.js';
 import { localMcpPlugin } from '../mcp/plugin.js';
+import { wmkResearchProxy } from '../providers/wmk-research.js';
 import { apiNotFoundPlugin } from './api-not-found.js';
 import { googleTokenUnavailablePlugin } from './google-token-unavailable.js';
 import { standaloneVoiceTools } from './voiceTools.js';
@@ -22,6 +23,7 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       ...localProviderPlugins({ realtime: { tools }, gemini: { tools } }),
       localMcpPlugin(),
+      wmkResearchProxy(),
       googleTokenUnavailablePlugin(),
       apiNotFoundPlugin(),
       unwatchedRuntimeDirsPlugin(),
